@@ -10,7 +10,7 @@ CORE_SO= evdev/core.so
 
 # Filepaths
 
-CORE_C= $(SRC)/evdev/core.c
+CORE_C= $(SRC)/evdev/core.c $(SRC)/compat53/compat-5.3.c
 
 # Rules
 

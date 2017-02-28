@@ -39,6 +39,7 @@ THE SOFTWARE.
 
 #include <lua.h>
 #include <lauxlib.h>
+#include "compat53/compat-5.3.h"
 
 /* Evdev wrappers */
 
@@ -56,6 +57,7 @@ if(dev->fd == -1) { \
 static int evdev_open(lua_State *L) {
 	const char *path = luaL_checkstring(L, 1);
 	int writeMode = lua_toboolean(L, 2);
+    int blockMode = lua_toboolean(L, 3);
 
 	/* create userdata */
 	struct inputDevice *dev = lua_newuserdata(L, sizeof(struct inputDevice));
@@ -65,13 +67,23 @@ static int evdev_open(lua_State *L) {
 	
 	if(writeMode) {
 		// if requested, attempt opening for writing so we can send LED events and such
-		dev->fd = open(path, O_RDWR | O_CLOEXEC);
+        if(blockMode){
+		    dev->fd = open(path, O_RDWR | O_CLOEXEC);
+        }else{
+            // open the device in non-block model
+		    dev->fd = open(path, O_RDWR | O_NONBLOCK | O_CLOEXEC);
+        }
 	}
 	
 	if(dev->fd < 0) {
 		// writing mode not requested or not allowed,
 		// try falling back to reading events only
-		dev->fd = open(path, O_RDONLY | O_CLOEXEC);
+        if(blockMode){
+		    dev->fd = open(path, O_RDONLY | O_CLOEXEC);
+        }else{
+            // open the device in non-block model
+		    dev->fd = open(path, O_RDONLY | O_NONBLOCK | O_CLOEXEC);
+        }
 	}
 
 	if(dev->fd < 0) {
